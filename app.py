@@ -1,6 +1,6 @@
-# |==========================|
-# |-Packages-----------------|
-# |==========================|
+# |============================================|
+# |-Packages-----------------------------------|
+# |============================================|
 
 import os, time, random, datetime as dt
 import pandas as pd
@@ -10,9 +10,22 @@ import streamlit as st
 import spotipy
 from spotipy.oauth2 import SpotifyOAuth
 
-# |==========================|
-# |-Functions----------------|
-# |==========================|
+# |============================================|
+# |-Temp: Spotify Credentials------------------|
+# |============================================|
+
+# Will need to remove this once we can figure out how to pull individual spotify keys
+spotipy_id = '54e936422c9f4205be8b5227327ea013'
+spotipy_secret_key = 'ac9fff9b26f54ff0846246142fc82d14'
+spotipy_red_uri = 'http://localhost:8502'
+
+os.environ["SPOTIPY_CLIENT_ID"] = str(spotipy_id)
+os.environ["SPOTIPY_CLIENT_SECRET"] = str(spotipy_secret_key)
+os.environ["SPOTIPY_REDIRECT_URI"] = str(spotipy_red_uri)
+
+# |============================================|
+# |-Functions----------------------------------|
+# |============================================|
 
 def get_token(oauth, code):
 
@@ -50,16 +63,22 @@ def app_sign_in():
         st.session_state["signed_in"] = True
         app_display_welcome()
         st.success("Sign in success!")
+        st.write(oauth)
         
     return sp
 
 def app_display_welcome():
     
-    # import secrets from streamlit deployment
-    cid = st.secrets["SPOTIPY_CLIENT_ID"]
-    csecret = st.secrets["SPOTIPY_CLIENT_SECRET"]
-    uri = st.secrets["SPOTIPY_REDIRECT_URI"]
+    # # import secrets from streamlit deployment
+    # cid = st.secrets["SPOTIPY_CLIENT_ID"]
+    # csecret = st.secrets["SPOTIPY_CLIENT_SECRET"]
+    # uri = st.secrets["SPOTIPY_REDIRECT_URI"]
 
+    # Using os.environ credentials instead during testing
+    cid = os.environ["SPOTIPY_CLIENT_ID"]
+    csecret = os.environ["SPOTIPY_CLIENT_SECRET"]
+    uri = os.environ["SPOTIPY_REDIRECT_URI"]
+    
     # set scope and establish connection
     scopes = " ".join(["user-read-private",
                        "playlist-read-private",
@@ -82,7 +101,7 @@ def app_display_welcome():
     # via the "_self" target
     link_html = " <a target=\"_self\" href=\"{url}\" >{msg}</a> ".format(
         url=auth_url,
-        msg="Click me to authenticate!"
+        msg="Authenticate here"
     )
     
     # define welcome
@@ -101,7 +120,7 @@ def app_display_welcome():
     # be implemented in Streamlit Cloud soon!_
     # """
 
-    st.title("Spotify Playlist Preserver")
+    st.title("Spotify Playlist Sequencer")
 
     if not st.session_state["signed_in"]:
         st.markdown(welcome_msg)
@@ -110,9 +129,9 @@ def app_display_welcome():
         st.markdown(link_html, unsafe_allow_html=True)
         # st.markdown(note_temp)
 
-# |==========================|
-# |-Code---------------------|
-# |==========================|
+# |============================================|
+# |-Code---------------------------------------|
+# |============================================|
 
 # Determining session cache state
 if "signed_in" not in st.session_state:    st.session_state["signed_in"] = False
