@@ -11,19 +11,6 @@ import spotipy
 from spotipy.oauth2 import SpotifyOAuth
 
 # |============================================|
-# |-Temp: Spotify Credentials------------------|
-# |============================================|
-
-# Will need to remove this once we can figure out how to pull individual spotify keys
-# spotipy_id = '54e936422c9f4205be8b5227327ea013'
-# spotipy_secret_key = 'ac9fff9b26f54ff0846246142fc82d14'
-# spotipy_red_uri = 'http://localhost:8502'
-
-# os.environ["SPOTIPY_CLIENT_ID"] = str(spotipy_id)
-# os.environ["SPOTIPY_CLIENT_SECRET"] = str(spotipy_secret_key)
-# os.environ["SPOTIPY_REDIRECT_URI"] = str(spotipy_red_uri)
-
-# |============================================|
 # |-Functions----------------------------------|
 # |============================================|
 
@@ -63,7 +50,6 @@ def app_sign_in():
         st.session_state["signed_in"] = True
         app_display_welcome()
         st.success("Sign in success!")
-        st.write(oauth)
         
     return sp
 
@@ -73,11 +59,6 @@ def app_display_welcome():
     cid = st.secrets["cid"]
     csecret = st.secrets["skey"]
     uri = st.secrets["red_uri"]
-
-    # Using os.environ credentials instead during testing
-    # cid = os.environ["SPOTIPY_CLIENT_ID"]
-    # csecret = os.environ["SPOTIPY_CLIENT_SECRET"]
-    # uri = os.environ["SPOTIPY_REDIRECT_URI"]
     
     # set scope and establish connection
     scopes = " ".join(["user-read-private",
@@ -140,16 +121,18 @@ if "code" not in st.session_state:         st.session_state["code"] = ""
 if "oauth" not in st.session_state:        st.session_state["oauth"] = None
     
 url_params = st.experimental_get_query_params()
+st.write(url_params)
 
 # attempt sign in with cached token
-if st.session_state["cached_token"] != "":
-    sp = app_sign_in()
-# if no token, but code in url, get code, parse token, and sign in
-elif "code" in url_params:
-    # all params stored as lists, see doc for explanation
-    st.session_state["code"] = url_params["code"][0]
-    app_get_token()
-    sp = app_sign_in()
-# otherwise, prompt for redirect
-else:
-    app_display_welcome()
+# if st.session_state["cached_token"] != "":
+#     sp = app_sign_in()
+# # if no token, but code in url, get code, parse token, and sign in
+
+# elif "code" in url_params:
+#     # all params stored as lists, see doc for explanation
+#     st.session_state["code"] = url_params["code"][0]
+#     app_get_token()
+#     sp = app_sign_in()
+# # otherwise, prompt for redirect
+# else:
+#     app_display_welcome()
