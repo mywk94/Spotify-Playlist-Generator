@@ -15,13 +15,13 @@ from spotipy.oauth2 import SpotifyOAuth
 # |============================================|
 
 # Will need to remove this once we can figure out how to pull individual spotify keys
-spotipy_id = '54e936422c9f4205be8b5227327ea013'
-spotipy_secret_key = 'ac9fff9b26f54ff0846246142fc82d14'
-spotipy_red_uri = 'http://localhost:8502'
+# spotipy_id = '54e936422c9f4205be8b5227327ea013'
+# spotipy_secret_key = 'ac9fff9b26f54ff0846246142fc82d14'
+# spotipy_red_uri = 'http://localhost:8502'
 
-os.environ["SPOTIPY_CLIENT_ID"] = str(spotipy_id)
-os.environ["SPOTIPY_CLIENT_SECRET"] = str(spotipy_secret_key)
-os.environ["SPOTIPY_REDIRECT_URI"] = str(spotipy_red_uri)
+# os.environ["SPOTIPY_CLIENT_ID"] = str(spotipy_id)
+# os.environ["SPOTIPY_CLIENT_SECRET"] = str(spotipy_secret_key)
+# os.environ["SPOTIPY_REDIRECT_URI"] = str(spotipy_red_uri)
 
 # |============================================|
 # |-Functions----------------------------------|
@@ -70,14 +70,14 @@ def app_sign_in():
 def app_display_welcome():
     
     # # import secrets from streamlit deployment
-    # cid = st.secrets["SPOTIPY_CLIENT_ID"]
-    # csecret = st.secrets["SPOTIPY_CLIENT_SECRET"]
-    # uri = st.secrets["SPOTIPY_REDIRECT_URI"]
+    cid = st.secrets["cid"]
+    csecret = st.secrets["skey"]
+    uri = st.secrets["red_uri"]
 
     # Using os.environ credentials instead during testing
-    cid = os.environ["SPOTIPY_CLIENT_ID"]
-    csecret = os.environ["SPOTIPY_CLIENT_SECRET"]
-    uri = os.environ["SPOTIPY_REDIRECT_URI"]
+    # cid = os.environ["SPOTIPY_CLIENT_ID"]
+    # csecret = os.environ["SPOTIPY_CLIENT_SECRET"]
+    # uri = os.environ["SPOTIPY_REDIRECT_URI"]
     
     # set scope and establish connection
     scopes = " ".join(["user-read-private",
