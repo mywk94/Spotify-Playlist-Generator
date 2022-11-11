@@ -1,138 +1,200 @@
-# |============================================|
-# |-Packages-----------------------------------|
-# |============================================|
-
 import os, time, random, datetime as dt
+from bottle import request
 import pandas as pd
 import numpy as np
 import streamlit as st
 
 import spotipy
-from spotipy.oauth2 import SpotifyOAuth
+from spotipy.oauth2 import SpotifyOAuth, SpotifyClientCredentials
+#|--------------------|
+# Initialisation State
+#|--------------------|
 
-# |============================================|
-# |-Functions----------------------------------|
-# |============================================|
-
-def get_token(oauth, code):
-
-    token = oauth.get_access_token(code, as_dict=False, check_cache=False)
-    # remove cached token saved in directory
-    os.remove(".cache")
-    
-    return token
-
-def sign_in(token):
-    sp = spotipy.Spotify(auth=token)
-    return sp
-
-def app_get_token():
-    try:
-        token = get_token(st.session_state["oauth"], st.session_state["code"])
-    
-    # Error handling when getting the token
-    except Exception as e:
-        st.error("An error occurred during token retrieval!")
-        st.write("The error is as follows:")
-        st.write(e)
-    else:
-        st.session_state["cached_token"] = token
-
-# Sign in to Spotify
-def app_sign_in():
-    try:
-        sp = sign_in(st.session_state["cached_token"])
-    except Exception as e:
-        st.error("An error occurred during sign-in!")
-        st.write("The error is as follows:")
-        st.write(e)
-    else:
-        st.session_state["signed_in"] = True
-        app_display_welcome()
-        st.success("Sign in success!")
-        
-    return sp
-
-def app_display_welcome():
-    
-    # # import secrets from streamlit deployment
-    cid = st.secrets["cid"]
-    csecret = st.secrets["skey"]
-    uri = st.secrets["red_uri"]
-    
-    # set scope and establish connection
-    scopes = " ".join(["user-read-private",
-                       "playlist-read-private",
-                       "playlist-modify-private",
-                       "playlist-modify-public",
-                       "user-read-recently-played"])
-
-    # create oauth object
-    oauth = SpotifyOAuth(scope=scopes,
-                         redirect_uri=uri,
-                         client_id=cid,
-                         client_secret=csecret)
-    # store oauth in session
-    st.session_state["oauth"] = oauth
-
-    # retrieve auth url
-    auth_url = oauth.get_authorize_url()
-    
-    # this SHOULD open the link in the same tab when Streamlit Cloud is updated
-    # via the "_self" target
-    link_html = " <a target=\"_self\" href=\"{url}\" >{msg}</a> ".format(
-        url=auth_url,
-        msg="Authenticate here"
-    )
-    
-    # define welcome
-    welcome_msg = """
-    Welcome! :wave: This app uses the Spotify API to interact with general 
-    music info and your playlists! In order to view and modify information 
-    associated with your account, you must log in. You only need to do this 
-    once.
-    """
-    
-    # define temporary note
-    # note_temp = """
-    # _Note: Unfortunately, the current version of Streamlit will not allow for
-    # staying on the same page, so the authorization and redirection will open in a 
-    # new tab. This has already been addressed in a development release, so it should
-    # be implemented in Streamlit Cloud soon!_
-    # """
-
-    st.title("Spotify Playlist Sequencer")
-
-    if not st.session_state["signed_in"]:
-        st.markdown(welcome_msg)
-        st.write(" ".join(["No tokens found for this session. Please log in by",
-                          "clicking the link below."]))
-        st.markdown(link_html, unsafe_allow_html=True)
-        # st.markdown(note_temp)
-
-# |============================================|
-# |-Code---------------------------------------|
-# |============================================|
-
-# Determining session cache state
+# Initial States
 if "signed_in" not in st.session_state:    st.session_state["signed_in"] = False
 if "cached_token" not in st.session_state: st.session_state["cached_token"] = ""
 if "code" not in st.session_state:         st.session_state["code"] = ""
 if "oauth" not in st.session_state:        st.session_state["oauth"] = None
+
+# import secrets from streamlit deployment
+cid = st.secrets["cid"]
+skey = st.secrets["skey"]
+uri = st.secrets["red_uri"]
+
+# set scope and establish connection
+scopes = " ".join(["user-read-private",
+                   "playlist-read-private",
+                   "playlist-modify-private",
+                   "playlist-modify-public",
+                   # "user-read-recently-played"
+                  ])
+
+# 0Auth object definition
+oauth = SpotifyOAuth(scope=scopes,
+                     redirect_uri=uri,
+                     client_id=cid,
+                     client_secret=skey,
+                     cache_path='.spotipyoauthcache')
+
+# Save state of 0Auth
+st.session_state['oauth'] = oauth
+
+# Get cached login if not signed in
+if st.session_state.signed_in == False:
     
-url_params = st.experimental_get_query_params()
-st.write(url_params)
+    # Create printable that we can remove later
+    login_text = st.empty()
+    
+    # Get cached token if any
+    access_token = ""
+    token_info = oauth.get_cached_token()
 
-# attempt sign in with cached token
-# if st.session_state["cached_token"] != "":
-#     sp = app_sign_in()
-# # if no token, but code in url, get code, parse token, and sign in
+    # Check for cached token
+    if token_info:
+        login_text.spinner("Found cached token!")
+        access_token = token_info['access_token']
 
-# elif "code" in url_params:
-#     # all params stored as lists, see doc for explanation
-#     st.session_state["code"] = url_params["code"][0]
-#     app_get_token()
-#     sp = app_sign_in()
-# # otherwise, prompt for redirect
-# else:
-#     app_display_welcome()
+    # If no cached token, get url response code
+    else:
+        url = oauth.get_authorize_url()
+        code = oauth.parse_response_code(url)
+
+        # Once you have the code, attempt to get access token
+        if code:
+            login_text.spinner('Found Spotify auth code in Request URL! Trying to get valid access token...')
+            access_token = oauth.get_access_token(as_dict=False)
+            # access_token = token_info['access_token']
+
+    # Access token exists, then use access token to access Spotify
+    if access_token:
+        login_text.spinner("Access token available! Trying to get user information...")
+        sp = spotipy.Spotify(access_token,auth_manager=oauth)
+        user_details = sp.current_user()
+
+    else:
+        # Display link to login
+        auth_url = oauth.get_authorize_url()
+        link_html = " <a target=\"_self\" href=\"{a_url}\" >{msg}</a> ".format(
+            a_url = auth_url,
+            msg = "AUTHENTICATE"
+        )
+        st.markdown('Login to Spotify here:')
+        st.markdown(link_html, unsafe_allow_html=True)
+        st.stop()
+
+    if user_details:
+        st.session_state.username = user_details['display_name']
+        st.session_state.userid = user_details['id']
+        st.session_state.user_uri = user_details['uri']
+        st.session_state.signed_in = True
+        login_text.empty()
+
+
+def sidebar_params():
+    
+    with st.sidebar:
+        with st.form('playlist_feature_targets'):
+            # Meta-Features
+            st.markdown('Meta-Features')
+            impact = st.slider('Impact',min_value=0.0,max_value=1.0,value=0.5)
+            hype = st.slider('Hype',min_value=0.0,max_value=1.0,value=0.5)
+            vibe = st.slider('Vibe',min_value=0.0,max_value=1.0,value=0.5)
+
+            # Feature targets
+            st.markdown('Fine-Tuning:')
+            instrumentalness = st.slider('Instrumentalness',min_value=0.0,max_value=1.0,value=0.5)
+            # liveness = st.slider('Liveness',min_value=0.0,max_value=1.0,value=0.5)
+            speechiness = st.slider('Speechiness',min_value=0.0,max_value=1.0,value=0.5)
+            acousticness = st.slider('Acousticness',min_value=0.0,max_value=1.0,value=0.5)
+            danceability = st.slider('Danceability',min_value=0.0,max_value=1.0,value=0.5)
+
+            # # Limits
+            # energy = st.slider('Energy',min_value=0.0,max_value=1.0,value=(0.20,0.75))
+            # # Need to set to max/min of tempo of dataset
+            # tempo = st.slider('Tempo',min_value=0.0,max_value=1.0,value=(0.20,0.75))
+            # loudness = st.slider('Loudness',min_value=0.0,max_value=1.0,value=(0.20,0.75))
+
+            #form button
+            pl_feat_gen = st.form_submit_button('Generate!')
+
+            # Some guiding sentences on the metrics
+            feat_def_exp = st.expander('Some definitions to help you:')
+            feat_def_exp.write('''  
+                **Impact**:  
+                How much 'oomph' you want in your music\n
+                **Hype**:  
+                When you want your heart rate to increase\n
+                **Vibe**:  
+                Common phrase said when vibing: 'this s*** slaps'\n
+                **Instrumentalness**:  
+                "Wait shouldn't a song have a singer?"\n
+                **Speechiness**:  
+                "Now you're just saying the lyrics" -rap hater\n
+                **Acousticness**:  
+                On a scale of Ed Sheeran to Skrillex\n
+                **Danceability**:  
+                Do your hips move involuntarily?  
+                ''')
+
+            if pl_feat_gen:
+                # What happens after generate is pressed?
+                pass
+                
+            
+                
+#|---------------|
+# Start up screen
+#|---------------|
+
+# Title
+st.title('A More Intuitive Playlist Generator for Spotify')
+
+# Subtext
+st.markdown(f'''
+Welcome {st.session_state.username}! This app aims to help create intuitive playlists 
+from an existing song base. Right now, the app works by sequencing a playlist of set 
+lengthbased on target meta-features from a pool, using a larger playlist as its base.
+''')
+
+# List of upcoming improvements
+improvements = st.expander('Planned improvements:')            
+improvements.markdown('''
+    1. Sequencing playlist based on user's liked songs!
+    2. Text-based hype/vibe assignment!
+    3. Sequencing based on a song or artist seed!
+    4. 
+    ''')
+
+# Playlist URL Input, and form submission
+with st.form('playlist_input'):
+
+    # Assign playlist_url null value to session state
+    if 'playlist_url' not in st.session_state: st.session_state.playlist_url = ''
+
+    url_tmp = st.text_input('To start, please input a playlist url:',
+                            value=st.session_state.playlist_url)
+
+    col1, col2, dummy = st.columns([1,1,6], gap='small')
+    with col1: pl_submitted = st.form_submit_button('Submit')
+    with col2: pl_clear = st.form_submit_button('Clear')
+
+    if pl_submitted:
+
+        #|------------------------------------|
+        # KIV: Add playlist verification here!
+        #|------------------------------------|
+
+        st.session_state.playlist_url = url_tmp
+        st.session_state.sidebar_state = 'expanded' # Set sidebar to open
+        # Force an app rerun after switching the sidebar state.
+        st.experimental_rerun() # Refresh app with sidebar open
+
+
+    elif pl_clear:
+        st.session_state.playlist_url = ''
+        st.experimental_rerun()
+        
+# Initialise the sidebar
+if ('playlist_url' in st.session_state) and (st.session_state.playlist_url != ''):
+    sidebar_params()
+    
