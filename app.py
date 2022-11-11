@@ -41,52 +41,54 @@ st.session_state['oauth'] = oauth
 # Get cached login if not signed in
 if st.session_state.signed_in == False:
     
-    # Create printable that we can remove later
-    login_text = st.empty()
-    
-    # Get cached token if any
-    access_token = ""
-    token_info = oauth.get_cached_token()
+    with st.spinner('Please wait...attempting login'):
+        
+        # Create printable that we can remove later
+        login_text = st.empty()
 
-    # Check for cached token
-    if token_info:
-        login_text.spinner("Found cached token!")
-        access_token = token_info['access_token']
+        # Get cached token if any
+        access_token = ""
+        token_info = oauth.get_cached_token()
 
-    # If no cached token, get url response code
-    else:
-        url = oauth.get_authorize_url()
-        code = oauth.parse_response_code(url)
+        # Check for cached token
+        if token_info:
+            login_text.write("Found cached token!")
+            access_token = token_info['access_token']
 
-        # Once you have the code, attempt to get access token
-        if code:
-            login_text.spinner('Found Spotify auth code in Request URL! Trying to get valid access token...')
-            access_token = oauth.get_access_token(as_dict=False)
-            # access_token = token_info['access_token']
+        # If no cached token, get url response code
+        else:
+            url = oauth.get_authorize_url()
+            code = oauth.parse_response_code(url)
 
-    # Access token exists, then use access token to access Spotify
-    if access_token:
-        login_text.spinner("Access token available! Trying to get user information...")
-        sp = spotipy.Spotify(access_token,auth_manager=oauth)
-        user_details = sp.current_user()
+            # Once you have the code, attempt to get access token
+            if code:
+                login_text.write('Found Spotify auth code in Request URL! Trying to get valid access token...')
+                access_token = oauth.get_access_token(as_dict=False)
+                # access_token = token_info['access_token']
 
-    else:
-        # Display link to login
-        auth_url = oauth.get_authorize_url()
-        link_html = " <a target=\"_self\" href=\"{a_url}\" >{msg}</a> ".format(
-            a_url = auth_url,
-            msg = "AUTHENTICATE"
-        )
-        st.markdown('Login to Spotify here:')
-        st.markdown(link_html, unsafe_allow_html=True)
-        st.stop()
+        # Access token exists, then use access token to access Spotify
+        if access_token:
+            login_text.write("Access token available! Trying to get user information...")
+            sp = spotipy.Spotify(access_token,auth_manager=oauth)
+            user_details = sp.current_user()
 
-    if user_details:
-        st.session_state.username = user_details['display_name']
-        st.session_state.userid = user_details['id']
-        st.session_state.user_uri = user_details['uri']
-        st.session_state.signed_in = True
-        login_text.empty()
+        else:
+            # Display link to login
+            auth_url = oauth.get_authorize_url()
+            link_html = " <a target=\"_self\" href=\"{a_url}\" >{msg}</a> ".format(
+                a_url = auth_url,
+                msg = "AUTHENTICATE"
+            )
+            st.markdown('Login to Spotify here:')
+            st.markdown(link_html, unsafe_allow_html=True)
+            st.stop()
+
+        if user_details:
+            st.session_state.username = user_details['display_name']
+            st.session_state.userid = user_details['id']
+            st.session_state.user_uri = user_details['uri']
+            st.session_state.signed_in = True
+            login_text.empty()
 
 
 def sidebar_params():
