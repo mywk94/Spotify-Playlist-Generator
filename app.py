@@ -1,5 +1,4 @@
 import os, time, random, datetime as dt
-from bottle import request
 import pandas as pd
 import numpy as np
 import streamlit as st
