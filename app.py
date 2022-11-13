@@ -52,23 +52,24 @@ if st.session_state.signed_in == False:
 
         # Check for cached token
         if token_info:
-            login_text.write("Found cached token!")
+            st.write("Found cached token!")
             access_token = token_info['access_token']
 
         # If no cached token, get url response code
         else:
+            st.write('No cached token, get url')
             url = oauth.get_authorize_url()
             code = oauth.parse_response_code(url)
 
             # Once you have the code, attempt to get access token
             if code:
-                login_text.write('Found Spotify auth code in Request URL! Trying to get valid access token...')
+                st.write('Found Spotify auth code in Request URL! Trying to get valid access token...')
                 access_token = oauth.get_access_token(as_dict=False)
                 # access_token = token_info['access_token']
 
         # Access token exists, then use access token to access Spotify
         if access_token:
-            login_text.write("Access token available! Trying to get user information...")
+            st.write("Access token available! Trying to get user information...")
             sp = spotipy.Spotify(access_token,auth_manager=oauth)
             user_details = sp.current_user()
 
@@ -89,8 +90,10 @@ if st.session_state.signed_in == False:
             st.session_state.user_uri = user_details['uri']
             st.session_state.signed_in = True
             login_text.empty()
+            
+            
 
-
+# Sidebar
 def sidebar_params():
     
     with st.sidebar:
@@ -143,6 +146,7 @@ def sidebar_params():
                 
             
                 
+# if st.session_state.
 #|---------------|
 # Start up screen
 #|---------------|
@@ -163,7 +167,7 @@ improvements.markdown('''
     1. Sequencing playlist based on user's liked songs!
     2. Text-based hype/vibe assignment!
     3. Sequencing based on a song or artist seed!
-    4. 
+    4. and more!
     ''')
 
 # Playlist URL Input, and form submission
