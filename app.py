@@ -65,6 +65,7 @@ if st.session_state.signed_in == False:
             if code:
                 st.write('Found Spotify auth code in Request URL! Trying to get valid access token...')
                 access_token = oauth.get_access_token(as_dict=False)
+                st.write('Access Token retrieved')
                 # access_token = token_info['access_token']
 
         # Access token exists, then use access token to access Spotify
