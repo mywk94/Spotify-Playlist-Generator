@@ -179,7 +179,7 @@ def sidebar_params(df):
                 
                 # Drop any vectors that are around 0.5; in other words, neither -ve nor +ve vector
                 list_drop = []
-                for vec in [i for i in target_vector.keys() if i not in ['track_uri','impact','hype','vibes']]:
+                for vec in [i for i in target_vector.keys() if i not in ['track_uri','vibes']]:
                     if round(target_vector[vec],1) == 0.5: list_drop = list_drop + [vec]
                 for vec in list_drop: target_vector.pop(vec)
                 
