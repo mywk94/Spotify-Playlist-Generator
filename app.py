@@ -64,8 +64,12 @@ if st.session_state.signed_in == False:
             access_token = token_info['access_token']
 
         # If no cached token, get url response code
-        else:
-            login_text.write('No cached token, get url')
+        else: 
+            link_html = " <a target=\"_self\" href=\"{a_url}\" >{msg}</a> ".format(
+                a_url = auth_url,
+                msg = "AUTHENTICATE"
+            )
+            login_text.write(f'No cached token, get url - {link_html} if not working', unsafe_allow_html=True)
             code = oauth.get_authorization_code()
             login_text.write('Found Spotify auth code in Request URL! Trying to get valid access token...')
             access_token = oauth.get_access_token(code,as_dict=False)
