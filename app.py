@@ -109,10 +109,14 @@ if st.session_state.signed_in == False:
 def sidebar_params(df):
     
     with st.sidebar:
+        
+        st.session_state.adv_switch = False
+        st.session_state.adv_switch = st.checkbox('Advanced Layout',value=False)
+
         with st.form('playlist_feature_targets'):
             # Meta-Features
             st.markdown('Meta-Features')
-            impact = st.slider('Oopmh',min_value=0.0,max_value=1.0,value=0.5, # More understandable as 'oomph'
+            impact = st.slider('Oomph',min_value=0.0,max_value=1.0,value=0.5, # More understandable as 'oomph'
                               help="How much 'oomph' you want in your music")
             hype = st.slider('Hype',min_value=0.0,max_value=1.0,value=0.5,
                             help="When you want your heart rate to increase")
@@ -120,22 +124,23 @@ def sidebar_params(df):
                              help="Common phrase said when vibing: 'this s*** slaps'")
 
             # Feature targets
-            st.markdown('Fine-Tuning:')
-            instrumentalness = st.slider('Instrumentalness',min_value=0.0,max_value=1.0,value=0.5,
-                                        help="'Wait shouldn't a song have a singer?'")
-            liveness = st.slider('Liveness',min_value=0.0,max_value=1.0,value=0.5,
-                                help="More crowds cheering")
-            speechiness = st.slider('Speechiness',min_value=0.0,max_value=1.0,value=0.5,
-                                   help="'Now you're just saying the lyrics' -rap hater")
-            acousticness = st.slider('Acousticness',min_value=0.0,max_value=1.0,value=0.5,
-                                    help="On a scale of Ed Sheeran to Skrillex")
-            danceability = st.slider('Danceability',min_value=0.0,max_value=1.0,value=0.5,
-                                    help="Your hips don't lie")
-            energy = st.slider('Energy',min_value=0.0,max_value=1.0,value=0.5,
-                              help="This 'feels' like a lot")
-            tempo = st.slider('Tempo',min_value=0.0,max_value=1.0,value=0.5,
-                             help="Music, but faster")
-            loudness = st.slider('Loudness',min_value=0.0,max_value=1.0,value=0.5,
+            if st.session_state.adv_switch:
+                st.markdown('Fine-Tuning:')
+                instrumentalness = st.slider('Instrumentalness',min_value=0.0,max_value=1.0,value=0.5,
+                                            help="'Wait shouldn't a song have a singer?'")
+                liveness = st.slider('Liveness',min_value=0.0,max_value=1.0,value=0.5,
+                                    help="More crowds cheering")
+                speechiness = st.slider('Speechiness',min_value=0.0,max_value=1.0,value=0.5,
+                                       help="'Now you're just saying the lyrics' -rap hater")
+                acousticness = st.slider('Acousticness',min_value=0.0,max_value=1.0,value=0.5,
+                                        help="On a scale of Ed Sheeran to Skrillex")
+                danceability = st.slider('Danceability',min_value=0.0,max_value=1.0,value=0.5,
+                                        help="Your hips don't lie")
+                energy = st.slider('Energy',min_value=0.0,max_value=1.0,value=0.5,
+                                  help="This 'feels' like a lot")
+                tempo = st.slider('Tempo',min_value=0.0,max_value=1.0,value=0.5,
+                                 help="Music, but faster")
+                loudness = st.slider('Loudness',min_value=0.0,max_value=1.0,value=0.5,
                                 help="How much sound do you want")
             
             # Other limits
@@ -164,17 +169,20 @@ def sidebar_params(df):
                                  'impact':max(0.01,min(impact,0.99)),
                                  'hype':max(0.01,min(hype,0.99)),
                                  'vibes':max(0.01,min(vibes,0.99)),
-                                 'instrumentalness':max(0.01,min(instrumentalness,0.99)),
-                                 'liveness':max(0.01,min(liveness,0.99)),
-                                 'speechiness':max(0.01,min(speechiness,0.99)),
-                                 'acousticness':max(0.01,min(acousticness,0.99)),
-                                 'danceability':max(0.01,min(danceability,0.99)),
-                                 'Popularity':max(0.01,min(popularity,0.99)),
-                                 'energy':max(0.01,min(energy,0.99)),
-                                 'tempo':max(0.01,min(tempo,0.99)),
-                                 'loudness':max(0.01,min(loudness,0.99))
+                                 'Popularity':max(0.01,min(popularity,0.99))
                                 }
-                
+                if st.session_state.adv_switch:
+                    target_vector_adv = {'instrumentalness':max(0.01,min(instrumentalness,0.99)),
+                                         'liveness':max(0.01,min(liveness,0.99)),
+                                         'speechiness':max(0.01,min(speechiness,0.99)),
+                                         'acousticness':max(0.01,min(acousticness,0.99)),
+                                         'danceability':max(0.01,min(danceability,0.99)),
+                                         'energy':max(0.01,min(energy,0.99)),
+                                         'tempo':max(0.01,min(tempo,0.99)),
+                                         'loudness':max(0.01,min(loudness,0.99))
+                                        }
+                    
+                    target_vector.update(target_vector_adv)
                 
                 
                 # Drop any vectors that are around 0.5; in other words, neither -ve nor +ve vector
