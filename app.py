@@ -124,7 +124,7 @@ def sidebar_params(df):
                 liveness = st.slider('Liveness',min_value=0.0,max_value=1.0,value=0.5,
                                     help="More crowds cheering")
                 speechiness = st.slider('Speechiness',min_value=0.0,max_value=1.0,value=0.5,
-                                       help="'Now you're just saying the lyrics' -rap hater")
+                                       help="'Now you're just saying the lyrics'")
                 acousticness = st.slider('Acousticness',min_value=0.0,max_value=1.0,value=0.5,
                                         help="On a scale of Ed Sheeran to Skrillex")
                 danceability = st.slider('Danceability',min_value=0.0,max_value=1.0,value=0.5,
@@ -135,6 +135,8 @@ def sidebar_params(df):
                                  help="Music, but faster")
                 loudness = st.slider('Loudness',min_value=0.0,max_value=1.0,value=0.5,
                                 help="How much sound do you want")
+                valence = st.slider('Valence',min_value=0.0,max_value=1.0,value=0.5,
+                                help="Positivity vs Negativity - it's subjective, I know")
             
             # Other limits
             st.markdown('Other Considerations:')
@@ -172,7 +174,8 @@ def sidebar_params(df):
                                          'danceability':max(0.01,min(danceability,0.99)),
                                          'energy':max(0.01,min(energy,0.99)),
                                          'tempo':max(0.01,min(tempo,0.99)),
-                                         'loudness':max(0.01,min(loudness,0.99))
+                                         'loudness':max(0.01,min(loudness,0.99)),
+                                         'valence':max(0.01,min(valence,0.99))
                                         }
                     
                     target_vector.update(target_vector_adv)
@@ -180,8 +183,13 @@ def sidebar_params(df):
                 
                 # Drop any vectors that are around 0.5; in other words, neither -ve nor +ve vector
                 list_drop = []
-                for vec in [i for i in target_vector.keys() if i not in ['track_uri','vibes']]:
-                    if round(target_vector[vec],1) == 0.5: list_drop = list_drop + [vec]
+                for vec in [i for i in target_vector.keys() if i not in ['track_uri']]:
+                    if (target_vector[vec] > 0.45) or (target_vector[vec] < 0.55): list_drop = list_drop + [vec]
+                    
+                # If all vectors removed (because of proximity to 0.5), then keep 3 main meta-features
+                if [vec for vec in target_vector.keys() if vec not in list_drop] == ['track_uri']:
+                    list_drop = [vec for vec in list_drop if vec not in ['impact','hype','vibes']]
+                
                 for vec in list_drop: target_vector.pop(vec)
                 
                 
@@ -195,15 +203,18 @@ def sidebar_params(df):
                 # After every 'generate', re-treat the dataframe to get a 
                 # new similarity matrix and display df
                 df = st.session_state.df
-                display_features = ['Name','Artist','Album','Popularity','Explicit','Genres']
+                display_features = ['Name','Artist','Album','Popularity','Explicit','Genres','Cos_sim']
                 df_scaled = df_scaled_transform(df) # Transform and scale the dataframe slice
                 
                 # Perform cosine similarity and generate track list
-                track_list = get_sim_list(df_scaled,target_vector) 
+                track_list, track_cossim = get_sim_list(df_scaled,target_vector) 
                 
                 # Generate df with only track list
                 df_scaled = df.set_index('track_uri').reindex(
-                    index = track_list).reset_index().head(num_tracks)
+                    index = track_list)
+                
+                df_scaled['Cos_sim'] = track_cossim
+                df_scaled = df_scaled.reset_index().head(num_tracks)
                 
                 # Update display df
                 df_display = df_scaled[display_features].copy()
@@ -614,9 +625,10 @@ def get_sim_list(df_scaled,target_vector):
     # Applying cosine similarity
     track_sim = cos_sim(df_vector)
     
-    # Return list of track uris most similar to the target vector
+    # Return list of track uris most similar to the target vector, and their cosine similarity
     track_order = track_sim['target'].sort_values(ascending=False).drop(index='target').index
-    return track_order
+    track_cossim = track_sim['target'].sort_values(ascending=False).drop(index='target').values
+    return track_order, track_cossim
 
     
 
