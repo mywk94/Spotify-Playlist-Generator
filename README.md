@@ -1,7 +1,22 @@
 <img src="http://imgur.com/1ZcRyrc.png" style="float: left; margin: 20px; height: 55px; width: 55px">
 
 # GA Capstone: Spotify Playlist Generator
-This project aims to create a spotify playlist generator that can sequence songs from a seed playlist following a mood vector.  
+<br>
+This project aims to create a spotify playlist generator that can sequence songs from a seed playlist following a mood vector. Feel free to reference my code, but be sure to make reference to it in your own!  
+
+This project has taken inspiration from the following other sources:
+1. [Cameron Watts][1]: Extracting Song Data from the Spotify API using Python
+2. [Raymond Cheng][2]: Build a Song Recommendation System Using Streamlit and Deploy on Heroku
+3. [chorgan182][3]: chorgan182's Playlist Preserver
+4. [Karina Kong][4]: Spotify Music Recommender
+5. [Zachary Lim][5]: Flask Spotify Plotly Template
+
+[1]:https://towardsdatascience.com/extracting-song-data-from-the-spotify-api-using-python-b1e79388d50
+[2]:https://towardsdatascience.com/build-a-song-recommendation-system-using-streamlit-and-deploy-on-heroku-375a57ce5e85
+[3]:https://github.com/chorgan182/PlaylistPreserver
+[4]:https://github.com/karinakong/young_grasshopper/tree/main/spotify_music_recommender
+[5]:https://github.com/zachlim98/Flask-Spotify-Plotly
+
 
 ## Background of Music, Spotify
 Spotify's role in the music industry needs no introduction - founded in 2006, it is a company that has become entrenched in how most people browse, discover, and enjoy music, both new and old. Initially meant as an answer to yester-decade's music file-sharing piracy issues, it now boasts over 450 million active users, with just under 200 million of them paid subscribers of the platform, and beating out its competition for market share that popped up in its wake, such as Apple Music, Youtube Music, and Amazon. 

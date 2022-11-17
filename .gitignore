@@ -131,3 +131,4 @@ dmypy.json
 # Ignore secrets
 .streamlit/
 st_deployment.ipynb
+.spotipyoauthcache
