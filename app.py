@@ -65,16 +65,11 @@ if st.session_state.signed_in == False:
 
         # If no cached token, get url response code
         else:
-#             st.write('No cached token, get url')
-#             url = oauth.get_authorize_url()
-#             code = oauth.parse_response_code(url)
-
-#             # Once you have the code, attempt to get access token
-#             if code:
+            login_text.write('No cached token, get url')
+            code = oauth.get_authorization_code()
             login_text.write('Found Spotify auth code in Request URL! Trying to get valid access token...')
-            access_token = oauth.get_access_token(as_dict=False)
+            access_token = oauth.get_access_token(code,as_dict=False)
             login_text.write('Access Token retrieved')
-            # access_token = token_info['access_token']
 
         # Access token exists, then use access token to access Spotify
         if access_token:
@@ -92,7 +87,6 @@ if st.session_state.signed_in == False:
             )
             st.markdown('Login to Spotify here:')
             st.markdown(link_html, unsafe_allow_html=True)
-            st.stop()
 
         if user_details:
             st.session_state.username = user_details['display_name']
