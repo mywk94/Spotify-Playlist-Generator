@@ -157,6 +157,9 @@ def sidebar_params(df):
 
             #form button
             pl_feat_gen = st.form_submit_button('Generate!')
+            
+            # For debugging
+            # if 'target_vector' in st.session_state: st.write(st.session_state.target_vector)
 
             if pl_feat_gen:
                 # What happens after generate is pressed?                
@@ -177,20 +180,33 @@ def sidebar_params(df):
                                          'loudness':max(0.01,min(loudness,0.99)),
                                          'valence':max(0.01,min(valence,0.99))
                                         }
-                    
-                    target_vector.update(target_vector_adv)
+                
+                else: # switch is False, assign 0.5 (i.e. 0 for cosine sim) for all fields
+                    target_vector_adv = {'instrumentalness':0.5,
+                                         'liveness':0.5,
+                                         'speechiness':0.5,
+                                         'acousticness':0.5,
+                                         'danceability':0.5,
+                                         'energy':0.5,
+                                         'tempo':0.5,
+                                         'loudness':0.5,
+                                         'valence':0.5
+                                        }
+                target_vector.update(target_vector_adv)
                 
                 
-                # Drop any vectors that are around 0.5; in other words, neither -ve nor +ve vector
-                list_drop = []
-                for vec in [i for i in target_vector.keys() if i not in ['track_uri']]:
-                    if (target_vector[vec] > 0.45) or (target_vector[vec] < 0.55): list_drop = list_drop + [vec]
-                    
-                # If all vectors removed (because of proximity to 0.5), then keep 3 main meta-features
-                if [vec for vec in target_vector.keys() if vec not in list_drop] == ['track_uri']:
-                    list_drop = [vec for vec in list_drop if vec not in ['impact','hype','vibes']]
                 
-                for vec in list_drop: target_vector.pop(vec)
+#                 # Drop any vectors that are around 0.5; in other words, neither -ve nor +ve vector
+#                 list_drop = []
+#                 for vec in [i for i in target_vector.keys() if i not in ['track_uri']]:
+#                     if (target_vector[vec] > 0.45) and (target_vector[vec] < 0.55): list_drop = list_drop + [vec]
+
+            
+#                 # If all vectors removed (because of proximity to 0.5), then keep 3 main meta-features
+#                 if len([vec for vec in target_vector.keys() if vec not in list_drop]) <= 2:
+#                     list_drop = [vec for vec in list_drop if vec not in ['impact','hype','vibes']]
+                
+#                 for vec in list_drop: target_vector.pop(vec)
                 
                 
                 
@@ -239,6 +255,7 @@ def get_track_total(url_tmp):
     try:
         playlist_tmp = url_tmp.split('/')[-1].split('?')[0] # Playlist URI
         track_total = sp.playlist(playlist_tmp)['tracks']['total']
+        st.success('Valid playlist URL')
         return track_total
     except:
         st.markdown('ERROR: Invalid playlist URL')
@@ -559,7 +576,11 @@ def df_mood_vectors(df, st_empty):
                                               df_tmp.loc[i,'acousticness'],
                                               df_tmp.loc[i,'loudness']),
                                            weights=[1,0.2,0.2,0,0,-0.2])
-        
+    
+    # Scale the new meta-features
+    ss = StandardScaler()
+    df_varray = ss.fit_transform(df_tmp[['impact','hype','vibes']])
+    df_tmp[['impact','hype','vibes']] = pd.DataFrame(df_varray,columns=['impact','hype','vibes'])
         
     return df_tmp
     
